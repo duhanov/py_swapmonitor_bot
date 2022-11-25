@@ -1,0 +1,19 @@
+{
+	"telegram_token": "",
+	"admin_nicknames": "admin1,admin2",
+	
+	"sleep": 60,
+
+	"provider": "https://bsc-dataseed.binance.org/",
+	"pool": "0x24481b22AcCA15027C77B76DeeF04E8d36dEA483",
+	"token1": {
+		"name": "DNT",
+		"contract": "0x2456493e757fDeedF569781F053998A72adfad03",
+		"zeros": 1000000
+	},
+	"token2": {
+		"name": "USDT",
+		"contract": "0x55d398326f99059fF775485246999027B3197955",
+		"zeros": 1000000000000000000
+	}
+}
