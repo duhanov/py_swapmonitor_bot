@@ -1,1 +1,1 @@
-python3 app.py > '/dev/null' 2>&1 & echo $! > "app.pid"
+python3 app2.py > '/dev/null' 2>&1 & echo $! > "app2.pid"

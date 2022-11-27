@@ -1,1 +1,1 @@
-kill -9 `cat ./app.pid`
+kill -9 `cat ./app2.pid`
