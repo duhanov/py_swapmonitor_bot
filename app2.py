@@ -103,7 +103,7 @@ def get_stats():
 		text = text + item[0]+ ": "
 		# + str(round(item[1]/config["token1"]["zeros"])) + " " + config["token1"]["name"] + ", " + str(round(item[2]/config["token2"]["zeros"]))  + " " + config["token2"]["name"] + "\n"
 		for token in item[1]:
-			text = text + str(round(token["total"]["total"]/token["total"]["zeros"])) + " " + token["name"] + ", "
+			text = text + str(round(token["total"]["total"]/token["total"]["zeros"], 2)) + " " + token["name"] + ", "
 		text = text + "\n"
 	if text == "":
 		text = "Нет данных"
@@ -119,7 +119,7 @@ def getAddrStat(address):
 		if Path(fname).is_file():
 			data = json.load(open(fname))
 			for tx in data["txs"]:
-				text = text + datetime.utcfromtimestamp(tx["time"]).strftime('%Y-%m-%d %H:%M') + " " + str(tx["amount"]) + " " + token["name"] + "\n"
+				text = text + datetime.utcfromtimestamp(tx["time"]).strftime('%Y-%m-%d %H:%M') + " " + str(round(tx["amount"]/token["zeros"],2)) + " " + token["name"] + "\n"
 		else:
 			print("cant find " + fname)
 	if text == "":
