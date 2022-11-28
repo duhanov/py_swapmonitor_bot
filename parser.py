@@ -62,12 +62,14 @@ class Parser:
 		print(data)
 		if data["args"]["to"] == self.config["pool"]:
 			print("EVENT! " + token["name"] + " send to pool " + str(data["args"]["value"]) + ' from ' + data["args"]["from"])
-			self.add_amount(data["args"]["from"], data["args"]["value"], data["transactionHash"], "event")
+
+
+			self.add_amount(token, data["args"]["from"], data["args"]["value"], data["transactionHash"], "event")
 			self.saveLastParsedBlock(data["blockNumber"])
 		#remove from pool
 		elif data["args"]["from"] == self.config["pool"]:
 			print("EVENT! " + token["name"] + " remove from pool " + str(data["args"]["value"]) + ' by ' + data["args"]["to"])
-			self.add_amount(data["args"]["to"], -1 * data["args"]["value"], data["transactionHash"], "event")
+			self.add_amount(token, data["args"]["to"], -1 * data["args"]["value"], data["transactionHash"], "event")
 			self.saveLastParsedBlock(data["blockNumber"])
 
 
