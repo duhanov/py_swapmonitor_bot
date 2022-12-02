@@ -212,8 +212,8 @@ parser = Parser()
 
 
 #Подписываемся на события
-#print("Listen Events...")
-#parser.listen_events()
+print("Listen Events...")
+parser.listen_events()
 
 #13 - 199
 #parser.parseTx("0xc15d395ab4231f9e5a43cb95113aa16564727a609ce2fb69b65ca5b49517a9c9")
@@ -229,7 +229,7 @@ parser = Parser()
 #parser.parseTx("0x7d4f308e0c3717299ba9d77420e985e6aaa91de39157e519f419dacd0a901a71")
 
 #swap 15 USD->
-parser.parseTx("0x3d031b7eaeafdfd450539322ce1eb5deb5af3954daf30b42b21bb6a165af8cf5")
+#parser.parseTx("0x3d031b7eaeafdfd450539322ce1eb5deb5af3954daf30b42b21bb6a165af8cf5")
 
 
 #print("Start Parser")
