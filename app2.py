@@ -14,6 +14,9 @@ from web3.middleware import geth_poa_middleware
 
 import re
 
+import warnings
+
+
 from datetime import datetime
 
 
@@ -40,7 +43,8 @@ def menu_markup():
 	markup=types.ReplyKeyboardMarkup(resize_keyboard=True)
 	#Главное меню
 	if menu_position == "":
-		markup.add(types.KeyboardButton("Статистика"))
+		markup.add(types.KeyboardButton("Статистика пула"))
+		markup.add(types.KeyboardButton("Статистика покупок"))
 		markup.add(types.KeyboardButton("Очистить статистику"))
 	elif menu_position == "clear":
 		markup.add(types.KeyboardButton("Да"))
@@ -56,55 +60,85 @@ def start_message(message):
 		tg_bot.send_message(message.chat.id,'Приветствую, @' + message.from_user.username,reply_markup=menu_markup())
 
 
+
 def clear_stats():
 	dir_list = os.listdir("accounts")
 	print(dir_list)
 	for fname in dir_list:
 		os.remove("accounts/" + fname)
 
+def token_value(value, token):
+	return str(round(value/token["zeros"],2)) + " " + token["name"]
+
+
 def get_stats():
 	global config
-	res = {}
+	arr = []
 	dir_list = os.listdir("accounts")
 	print(dir_list)
 	for fname in dir_list:
 		if os.path.splitext(fname)[1] == ".json":
-			account = ""
-			for token in config["tokens"]:
-				if fname[0:len(token["name"])+1] == token["name"] + "_":
-					account = fname[len(token["name"])+1:len(token["name"])-4-len(token["name"])]
-					if account != "":
-						print(fname)
-						print(account)
-						print(token["name"])
-						#Запоминаем статистику
-						if not account in res.keys():					
-							res[account] = {}
+			print(fname[0:4] )
+			if fname[0:5] == "pool_":
+				account = fname[5:len(fname)-5]
+				print("Account: " + account)
+				acc_info = json.load(open("accounts/" + fname))
+				arr.append([account, acc_info])
 
-						acc_info = json.load(open("accounts/" + fname))
 
-						res[account][token["name"]] = {"total": acc_info["total"], "zeros": token["zeros"]}
-
-	arr = []
-	#res[account][config["tokens"][0]["name"]], res[account][config["tokens"]["name"]
-	for account in res.keys():
-		acc_tokens = []
-		for token in res[account].keys():
-			acc_tokens.append({"name": token, "total": res[account][token]})
-		arr.append([account, acc_tokens])
-
-#	arr.append(["test", 2,2])
-#	arr.append(["test", 3,3])
-#	arr.append(["test", 1,1])
-	arr.sort(key=lambda x: x[1][0]["total"]["total"], reverse=True)
+	arr.sort(key=lambda x: x[1]["total0"], reverse=True)
 
 	text = ""
 	for item in arr:
-		text = text + item[0]+ ": "
-		# + str(round(item[1]/config["token1"]["zeros"])) + " " + config["token1"]["name"] + ", " + str(round(item[2]/config["token2"]["zeros"]))  + " " + config["token2"]["name"] + "\n"
-		for token in item[1]:
-			text = text + str(round(token["total"]["total"]/token["total"]["zeros"], 2)) + " " + token["name"] + ", "
-		text = text + "\n"
+		text = text + item[0]+ ": " + token_value(item[1]["total0"], config["tokens"][0]) + ", " + token_value(item[1]["total1"], config["tokens"][1]) 
+
+	if text == "":
+		text = "Нет данных"
+	return text
+
+
+def tg_send(chat_id, msg):
+	global tg_bot
+	#Макс длина строги в тг
+	max_len = 4096
+	text_out = ""
+	for line in msg.split("\n"):
+		#Привысили макс длину - бьем гна подстроки
+		if len(text_out + line) > max_len:
+			part_str = ""
+			for part_line in line.split(", "):
+				if len(text_out + part_line) > max_len:					
+					tg_bot.send_message(chat_id, text_out, reply_markup=menu_markup())
+					text_out = ""
+				else:
+					text_out = text_out + part_line + ", "
+		else:
+			text_out = text_out + line + "\n"
+	if text_out != "":
+		tg_bot.send_message(chat_id, text_out, reply_markup=menu_markup())
+
+
+
+def get_stats2():
+	global config
+	arr = []
+	dir_list = os.listdir("accounts")
+	print(dir_list)
+	for fname in dir_list:
+		if os.path.splitext(fname)[1] == ".json":
+			if fname[0:4] == "min_":
+				account = fname[4:len(fname)-4]
+				print("Account: " + account)
+				acc_info = json.load(open("accounts/" + fname))
+				arr.append([account, acc_info])
+
+
+	arr.sort(key=lambda x: x[1]["total0"], reverse=True)
+
+	text = ""
+	for item in arr:
+		text = text + item[0] + ": " + token_value(item[1]["total1"], config["tokens"][1]) + " -> " + token_value(item[1]["total0"], config["tokens"][0])
+
 	if text == "":
 		text = "Нет данных"
 	return text
@@ -112,16 +146,14 @@ def get_stats():
 
 def getAddrStat(address):
 	global config
-	text = "Transaction for " + address + "\n"
-	for token in config["tokens"]:
-		fname = "accounts/" + token["name"] + "_" + address +".json"
-		text = text + "TX FOR " + token["name"] + "\n"
-		if Path(fname).is_file():
-			data = json.load(open(fname))
-			for tx in data["txs"]:
-				text = text + datetime.utcfromtimestamp(tx["time"]).strftime('%Y-%m-%d %H:%M') + " " + str(round(tx["amount"]/token["zeros"],2)) + " " + token["name"] + "\n"
-		else:
-			print("cant find " + fname)
+	text = "Transactions " + address + "\n"
+	fname = "accounts/pool_" + address +".json"
+
+	if Path(fname).is_file():
+		data = json.load(open(fname))
+		for tx in data["txs"]:
+			text = text + datetime.utcfromtimestamp(tx["time"]).strftime('%Y-%m-%d %H:%M') + " " + token_value(tx["amount0"], config["tokens"][0]) + ", " + token_value(tx["amount1"], config["tokens"][1]) + "\n"
+
 	if text == "":
 		text = "Данные для адреса " + address + " не найдены"
 	return text
@@ -139,10 +171,15 @@ def message_reply(message):
 			menu_position = ""
 			tg_bot.send_message(message.chat.id, "Выберите действие",reply_markup=menu_markup())
 			return
-		elif message.text == "Статистика":
+		elif message.text == "Статистика пула":
 			menu_position = ""
 
-			tg_bot.send_message(message.chat.id, get_stats(),reply_markup=menu_markup())
+#			tg_bot.send_message(message.chat.id, get_stats(),reply_markup=menu_markup())
+			tg_send(message.chat.id, get_stats())
+		elif message.text == "Статистика покупок":
+			menu_position = ""
+			tg_send(message.chat.id, get_stats2())
+			#tg_bot.send_message(message.chat.id, get_stats2(),reply_markup=menu_markup())
 		elif re.search("^0x[a-zA-Z0-9]{40}$", message.text):
 		#  ==  0xF300D3ac8B3f93550C5aD8d4cCfF88dbff3c3d23"asd			
 			menu_position = ""
@@ -162,6 +199,11 @@ def message_reply(message):
 
 
 
+#Disable Warnings
+warnings.simplefilter('ignore')
+
+
+
 #Поток обработки транзакций
 
 
@@ -170,14 +212,30 @@ parser = Parser()
 
 
 #Подписываемся на события
-print("Listen Events...")
-parser.listen_events()
+#print("Listen Events...")
+#parser.listen_events()
+
+#13 - 199
+#parser.parseTx("0xc15d395ab4231f9e5a43cb95113aa16564727a609ce2fb69b65ca5b49517a9c9")
+#dnt - usd
+#parser.parseTx("0x4f51a757a6bf9b6a2dab20d2ee3f82ba567503a655c4ee95d3263c851956c960")
 
 
-print("Start Parser")
+#remove 23 liq
+#parser.parseTx("0x09998a959f22e1b762c03ad240e3f6e702af75445c83c2510ce28188a68e3142")
+
+
+#add 12 USD liq
+#parser.parseTx("0x7d4f308e0c3717299ba9d77420e985e6aaa91de39157e519f419dacd0a901a71")
+
+#swap 15 USD->
+parser.parseTx("0x3d031b7eaeafdfd450539322ce1eb5deb5af3954daf30b42b21bb6a165af8cf5")
+
+
+#print("Start Parser")
 #Старт парсер блоков
-thread_parser = Thread(target=parser.parseAllBlocks)
-thread_parser.start()
+#thread_parser = Thread(target=parser.parseAllBlocks)
+#thread_parser.start()
 
 
 
