@@ -162,6 +162,7 @@ def getAddrStat(address):
 @tg_bot.message_handler(content_types='text')
 def message_reply(message):
 	global menu_position
+	global parser
 	print("message_reply()")
 	print("menu_position=" + menu_position)
 	#Только для админов
@@ -171,6 +172,8 @@ def message_reply(message):
 			menu_position = ""
 			tg_bot.send_message(message.chat.id, "Выберите действие",reply_markup=menu_markup())
 			return
+		if message.text  == "/lasttx":
+			tg_bot.send_message(message.chat.id, "Последняя транзакция: " + str(time.time() - parser.last_event_at) + "sec" ,reply_markup=menu_markup())			
 		elif message.text == "Статистика пула":
 			menu_position = ""
 
