@@ -191,8 +191,8 @@ class monitorTransfer(threading.Thread):
 
 
 
-monitor1 = monitorTransfer(config["token1"])
-monitor2 = monitorTransfer(config["token2"])
+monitor1 = monitorTransfer(config["tokens"][0])
+monitor2 = monitorTransfer(config["tokens"][1])
 #thread2.run()
 
 thread1 = Thread(target=monitor1.run)

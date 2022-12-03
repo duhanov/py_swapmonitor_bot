@@ -9,6 +9,9 @@ from web3.middleware import geth_poa_middleware
 
 from threading import Thread
 
+
+from datetime import datetime
+
 class Parser:
 	web3 = Web3()
 	config = json.load(open('config.json'))
@@ -18,7 +21,7 @@ class Parser:
 	parser_progress = False
 
 	def __init__(self):
-		print("init")
+		print("connect to web3...")
 		self.web3 = Web3(Web3.HTTPProvider(self.config["provider"], request_kwargs={'timeout': 12000}))
 		self.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 		#config = json.load(open('config.json'))
@@ -28,6 +31,7 @@ class Parser:
 
 
 
+		print("OK")
 
 
 	#Сохранить значение инвестиций
@@ -109,7 +113,10 @@ class Parser:
 		thread = Thread(target=self.listen_pool_events_thread)
 		thread.start()
 
+	last_event_at = time.time()
+
 	def listen_pool_events_thread(self):
+
 		print("Listen EVENTS POOL")
 		web3 = Web3(Web3.HTTPProvider(self.config["events_provider"], request_kwargs={'timeout': 12000}))
 		contract = web3.eth.contract(address=Web3.toChecksumAddress(self.config["pool"]), abi=json.load(open('abi/pool.json')))
@@ -117,9 +124,16 @@ class Parser:
 		try:
 			while True:
 				for item in event_filter.get_new_entries():
+					self.last_event_at = time.time()
 					self.handle_event(item)
-				print("Sleep " + str(self.config["sleep"]) + " seconds")
+				if self.last_event_at > time.time() - self.config["sleep"] - 2:
+					print("! NEW EVENTS !")
+
+
+				print("Sleep " + str(self.config["sleep"]) + " seconds. Last event: " + str(time.time() - self.last_event_at) + "sec ago")
+
 				time.sleep(self.config["sleep"])
+#				print(datetime.fromtimestamp(last_event_at).strftime("%d.%m.%Y %H:%M"))
 		except Exception as exc:
 			print("ERROR! Web3 exception in listen_pool_events_thread()")
 			print(exc)
