@@ -117,7 +117,7 @@ class Parser:
 		try:
 			while True:
 				for item in event_filter.get_new_entries():
-					self.handle_event(token, item)
+					self.handle_event(item)
 				print("Sleep " + str(self.config["sleep"]) + " seconds")
 				time.sleep(self.config["sleep"])
 		except Exception as exc:
@@ -128,31 +128,31 @@ class Parser:
 
 
 
-	def listen_pool_events_old(self):
-		for token in self.config["tokens"]:
-			print("t")
-			thread = Thread(target=self.listen_pool_events_token, args=(token,))
-			thread.start()
-			print("Subscribe events for " + token["name"])
+#	def listen_pool_events_old(self):
+#		for token in self.config["tokens"]:
+#			print("t")
+#			thread = Thread(target=self.listen_pool_events_token, args=(token,))
+#			thread.start()
+#			print("Subscribe events for " + token["name"])
 
-	def listen_pool_events_token(self, token):
-		print("Listen EVENTS " + token["name"] + " " + token["contract"])
-		web3 = Web3(Web3.HTTPProvider(self.config["events_provider"], request_kwargs={'timeout': 12000}))
-		contract = web3.eth.contract(address=Web3.toChecksumAddress(token["contract"]), abi=json.load(open('pair_abi.json')))
+#	def listen_pool_events_token(self, token):
+#		print("Listen EVENTS " + token["name"] + " " + token["contract"])
+#		web3 = Web3(Web3.HTTPProvider(self.config["events_provider"], request_kwargs={'timeout': 12000}))
+#		contract = web3.eth.contract(address=Web3.toChecksumAddress(token["contract"]), abi=json.load(open('pair_abi.json')))
 
-		event_filter = contract.events.Transfer.createFilter(fromBlock='latest')
-
-		try:
-			while True:
-				for item in event_filter.get_new_entries():
-					self.handle_event(token, item)
-				print("Sleep " + str(self.config["sleep"]) + " seconds")
-				time.sleep(self.config["sleep"])
-		except Exception as exc:
-			print("ERROR! Web3 exception " + token["name"])
-			print(exc)
-			print("Reconnect...")
-			self.listen_pool_events_token(token)
+#		event_filter = contract.events.Transfer.createFilter(fromBlock='latest')
+#
+#		try:
+#			while True:
+#				for item in event_filter.get_new_entries():
+##					self.handle_event(token, item)
+#				print("Sleep " + str(self.config["sleep"]) + " seconds")
+#				time.sleep(self.config["sleep"])
+#		except Exception as exc:
+#			print("ERROR! Web3 exception " + token["name"])
+#			print(exc)
+#			print("Reconnect...")
+#			self.listen_pool_events_token(token)
 
 
 
