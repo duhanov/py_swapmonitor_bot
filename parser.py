@@ -119,8 +119,13 @@ class Parser:
 
 		print("Listen EVENTS POOL")
 		web3 = Web3(Web3.HTTPProvider(self.config["events_provider"], request_kwargs={'timeout': 12000}))
-		contract = web3.eth.contract(address=Web3.toChecksumAddress(self.config["TransferHelper"]), abi=json.load(open('abi/pool.json')))
-		print("Listen Transfer Event for " + self.config["TransferHelper"])
+#		contract = web3.eth.contract(address=Web3.toChecksumAddress(self.config["TransferHelper"]), abi=json.load(open('abi/pool.json')))
+#		print("Listen Transfer Event for " + self.config["TransferHelper"])
+		contract_address = self.config["TransferHelper"]
+		contract_address = self.config["tokens"][0]["contract"]
+		contract = web3.eth.contract(address=Web3.toChecksumAddress(contract_address), abi=json.load(open('abi/pool.json')))
+		print("Listen Transfer Event for " + contract_address)
+
 		event_filter = contract.events.Transfer.createFilter(fromBlock='latest')
 		try:
 			while True:
