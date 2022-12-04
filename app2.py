@@ -90,7 +90,7 @@ def get_stats():
 
 	text = ""
 	for item in arr:
-		text = text + item[0]+ ": " + token_value(item[1]["total0"], config["tokens"][0]) + ", " + token_value(item[1]["total1"], config["tokens"][1]) 
+		text = text + item[0]+ ": " + token_value(item[1]["total0"], config["tokens"][0]) + ", " + token_value(item[1]["total1"], config["tokens"][1]) + "\n"
 
 	if text == "":
 		text = "Нет данных"
@@ -137,7 +137,7 @@ def get_stats2():
 
 	text = ""
 	for item in arr:
-		text = text + item[0] + ": " + token_value(item[1]["total1"], config["tokens"][1]) + " -> " + token_value(item[1]["total0"], config["tokens"][0])
+		text = text + item[0] + ": " + token_value(item[1]["total1"], config["tokens"][1]) + " -> " + token_value(item[1]["total0"], config["tokens"][0]) + "\n"
 
 	if text == "":
 		text = "Нет данных"
