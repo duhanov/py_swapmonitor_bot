@@ -327,11 +327,11 @@ class Parser:
 			if found_abi:
 				abi_events = [abi for abi in contract.abi if abi["type"] == "event"]
 
-				#Есть перевод LP-токенов
-				foundLpTransfer = False
-				#Есть перевод средств
-				foundToken1Transfer = False
-				foundToken2Transfer = False
+				
+				foundPool = False
+				token0Amount = 0
+				token1Amount = 0
+				account = ""
 
 				for event in abi_events:
 					#Если в транзе есть евент
@@ -366,10 +366,10 @@ class Parser:
 						if event["name"] in ["Transfer"]:
 							print("EVENT " + event["name"])
 							decoded_logs = self.decodeLogs(contract, receipt, log, event)
-							token0Amount = 0
-							token1Amount = 0
-							account = ""
-							foundPool = False
+							#token0Amount = 0
+							#token1Amount = 0
+							#account = ""
+							#foundPool = False
 							for l in decoded_logs:
 								#Перевели в пул и адрес=
 								if l["args"]["to"] == self.config["pool"] and l["address"] == self.config["tokens"][0]["contract"]:
