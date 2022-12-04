@@ -146,13 +146,20 @@ def get_stats2():
 
 def getAddrStat(address):
 	global config
-	text = "Transactions " + address + "\n"
+	text = "Транзакции из/в POOL:\n"
 	fname = "accounts/pool_" + address +".json"
-
 	if Path(fname).is_file():
 		data = json.load(open(fname))
 		for tx in data["txs"]:
 			text = text + datetime.utcfromtimestamp(tx["time"]).strftime('%Y-%m-%d %H:%M') + " " + token_value(tx["amount0"], config["tokens"][0]) + ", " + token_value(tx["amount1"], config["tokens"][1]) + "\n"
+
+	text = text + "\nТранзакции покупки " + config["tokens"][0]["name"] + ":\n"
+	fname = "accounts/min_" + address +".json"
+	if Path(fname).is_file():
+		data = json.load(open(fname))
+		for tx in data["txs"]:
+			text = text + datetime.utcfromtimestamp(tx["time"]).strftime('%Y-%m-%d %H:%M') + " " + token_value(tx["amount0"], config["tokens"][0]) + ", " + token_value(tx["amount1"], config["tokens"][1]) + "\n"
+
 
 	if text == "":
 		text = "Данные для адреса " + address + " не найдены"
