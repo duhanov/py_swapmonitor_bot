@@ -34,6 +34,37 @@ class Parser:
 		print("OK")
 
 
+
+	settings_file_name = "settings.json"
+
+	def settings(self, name):
+		if not name in ["buy_min_amount"]:
+			return ""
+		else:
+			fname = ""
+			if Path(self.settings_file_name).is_file():
+				data = self.load_data(self.settings_file_name)
+			else:
+				data = {"buy_min_amount": 10}
+
+			return data[name]
+
+	def load_data(self, fname):
+		return json.load(open(fname))
+
+	def save_settings(self, name, value):
+		data = {}
+		if Path(self.settings_file_name).is_file():
+			data = self.load_data(self.settings_file_name)
+		else:
+			data = {"buy_min_amount": 10}
+		print("params:")
+		print(data)
+		print(name)
+		print(value)
+		data[name] = value
+		self.save_data(self.settings_file_name, data)
+
 	#Сохранить значение инвестиций
 	def save_pool(self, address, amount0, amount1, hash, source):
 		total = 0
@@ -56,8 +87,14 @@ class Parser:
 			data["total0"] = data["total0"] + amount0
 			data["total1"] = data["total1"] + amount1
 			data["txs"].append({"time": time.time(), "amount0": amount0, "amount1": amount1, "source": source, "hash": hash})
+			print("pool saved")
 			with open(fname, 'w') as f:
 				json.dump(data, f)
+
+
+	def save_data(self, fname, data):
+		with open(fname, 'w') as f:
+			json.dump(data, f)
 
 
 	def add_amount(self, token, address, amount, hash, source):
@@ -80,6 +117,8 @@ class Parser:
 		else:
 			data["total"] = data["total"] + amount
 			data["txs"].append({"time": time.time(), "amount": amount, "source": source, "hash": hash})
+			print("pool saved")
+
 			with open(fname, 'w') as f:
 				json.dump(data, f)
 
@@ -305,13 +344,16 @@ class Parser:
 								print(l)
 								print("---")
 								if l["args"]["sender"] == self.config["TransferHelper"]:
+									print("Swap by Cakeswap")
 									if l["args"]["amount1In"] != 0 and l["args"]["amount0Out"] != 0:
 										print("send " + str(l["args"]["amount1In"]) + " USDT")
 										print("out " + str(l["args"]["amount0Out"]) + "DNT")
 										print("account: " + l["args"]["to"])
 
 										#fixe buy amounts
-										if l["args"]["amount1In"] >= self.config["buy_min_amount"] * self.config["tokens"][1]["zeros"]:
+										print("check " + str(self.settings("buy_min_amount")) +str(self.settings("buy_min_amount") * self.config["tokens"][1]["zeros"]))
+										if l["args"]["amount1In"] >= self.settings("buy_min_amount") * self.config["tokens"][1]["zeros"]:
+											print("save_min_buy()")
 											self.save_min_buy(l["args"]["to"], l["args"]["amount0Out"], l["args"]["amount1In"], l["transactionHash"].hex())
 
 									elif l["args"]["amount0In"] != 0 and l["args"]["amount1Out"] != 0:
@@ -353,10 +395,14 @@ class Parser:
 								#Перевод LP токенов
 								if l["args"]["from"] == "0x0000000000000000000000000000000000000000" and l["address"] == self.config["pool"]:
 									foundPool = True
-							#Сохраняем POOL
-							if foundPool and token0Amount != 0 and token1Amount != 0:
-								print("POOL " + account + " " + str(token0Amount) + " " + str(token1Amount))
-								self.save_pool(account, token0Amount, token1Amount, l["transactionHash"].hex(), "events")
+							#cycle by logs
+					#event exist
+				#cycle by events
+
+				#Сохраняем POOL
+				if foundPool and token0Amount != 0 and token1Amount != 0:
+					print("SAVE POOL " + account + " " + str(token0Amount) + " " + str(token1Amount))
+					self.save_pool(account, token0Amount, token1Amount, l["transactionHash"].hex(), "events")
 
 #								print(l)
 #								print("---")

@@ -174,6 +174,16 @@ def message_reply(message):
 			return
 		if message.text  == "/lasttx":
 			tg_bot.send_message(message.chat.id, "Последняя транзакция: " + str(time.time() - parser.last_event_at) + "sec" ,reply_markup=menu_markup())			
+		elif message.text == "/minbuy":
+			tg_bot.send_message(message.chat.id, "Фиксировать минимальную ценую покупки на: " + str(parser.settings("buy_min_amount")) + "USDT" ,reply_markup=menu_markup())			
+
+		elif re.search("^\/minbuy [0-9\.]+$", message.text):
+			buy_min_amount = float(message.text.split(" ")[1])
+			print("new buy_min_amount = ")
+			print(buy_min_amount)
+			parser.save_settings("buy_min_amount", buy_min_amount)
+			tg_bot.send_message(message.chat.id, "Фиксировать минимальную ценую покупки на: " + str(parser.settings("buy_min_amount")) + "USDT" ,reply_markup=menu_markup())			
+
 		elif message.text == "Статистика пула":
 			menu_position = ""
 
