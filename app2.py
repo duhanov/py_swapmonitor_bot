@@ -45,7 +45,7 @@ def menu_markup():
 	if menu_position == "":
 		markup.add(types.KeyboardButton("Статистика пула"))
 		markup.add(types.KeyboardButton("Статистика покупок"))
-		markup.add(types.KeyboardButton("Очистить статистику"))
+#		markup.add(types.KeyboardButton("Очистить статистику"))
 	elif menu_position == "clear":
 		markup.add(types.KeyboardButton("Да"))
 		markup.add(types.KeyboardButton("Нет"))
@@ -204,7 +204,7 @@ def message_reply(message):
 		#  ==  0xF300D3ac8B3f93550C5aD8d4cCfF88dbff3c3d23"asd			
 			menu_position = ""
 			tg_bot.send_message(message.chat.id, getAddrStat(message.text),reply_markup=menu_markup())
-		elif message.text == "Очистить статистику":
+		elif message.text == "/clear_stats":
 			menu_position = "clear"
 			tg_bot.send_message(message.chat.id, "Хотите очистить статистику?",reply_markup=menu_markup())
 		elif message.text == "Да" and menu_position == "clear":
