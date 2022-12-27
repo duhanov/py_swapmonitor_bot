@@ -11,6 +11,7 @@ from threading import Thread
 
 
 from datetime import datetime
+from datetime import timedelta
 
 class Parser:
 	web3 = Web3()
@@ -297,112 +298,114 @@ class Parser:
 
 
 	def parseTx(self, tx_hash):
-		print("parseTx " + tx_hash)
+		#print("parseTx " + tx_hash)
 		tx = self.web3.eth.get_transaction(tx_hash)
 		receipt = self.web3.eth.get_transaction_receipt(tx_hash)
 #		print("receipt:")
 #		print(receipt)
 #		print(receipt)
+#		print("logs:")
+#		print(receipt["logs"])
 		for log in receipt["logs"]:
-#			print(log["address"])
-			receipt_event_signature_hex = self.web3.toHex(log["topics"][0])
+			if len(log["topics"])>0:
+				receipt_event_signature_hex = self.web3.toHex(log["topics"][0])
 
-			found_abi = True
+				found_abi = True
 			
 			#Адрем пары обмена
 #			print("log address: " + log["address"] + self.addr_name(log["address"]))
-			if log["address"] == self.config["pair"]:
-#				abi = json.load(open('abi/pair.json'))
-				abi = json.load(open('pool_abi.json'))
+				if log["address"] == self.config["pair"]:
+#					abi = json.load(open('abi/pair.json'))
+					abi = json.load(open('pool_abi.json'))
 
-				contract = self.web3.eth.contract(self.config["pool"], abi=abi)
+					contract = self.web3.eth.contract(self.config["pool"], abi=abi)
 
 
-			#Если есть перевод на адрес пула
-			elif log["address"] == self.config["pool"]:
-				abi = json.load(open('pool_abi.json'))
-				contract = self.web3.eth.contract(self.config["pool"], abi=abi)
-			else:
-				found_abi = False
-			if found_abi:
-				abi_events = [abi for abi in contract.abi if abi["type"] == "event"]
+				#Если есть перевод на адрес пула
+				elif log["address"] == self.config["pool"]:
+					abi = json.load(open('pool_abi.json'))
+					contract = self.web3.eth.contract(self.config["pool"], abi=abi)
+				else:
+					found_abi = False
+				if found_abi:
+					abi_events = [abi for abi in contract.abi if abi["type"] == "event"]
 
 				
-				foundPool = False
-				token0Amount = 0
-				token1Amount = 0
-				account = ""
+					foundPool = False
+					token0Amount = 0
+					token1Amount = 0
+					account = ""
 
-				for event in abi_events:
-					#Если в транзе есть евент
-					if self.eventSignatureHex(event) == receipt_event_signature_hex:
+					for event in abi_events:
+						#Если в транзе есть евент
+						if self.eventSignatureHex(event) == receipt_event_signature_hex:
 
-						if event["name"] == "Swap":
-							print("EVENT " + event["name"])
-							decoded_logs = self.decodeLogs(contract, receipt, log, event)
-							for l in decoded_logs:
-								print(l)
-								print("---")
-								if l["args"]["sender"] == self.config["TransferHelper"]:
-									print("Swap by Cakeswap")
-									if l["args"]["amount1In"] != 0 and l["args"]["amount0Out"] != 0:
-										print("send " + str(l["args"]["amount1In"]) + " USDT")
-										print("out " + str(l["args"]["amount0Out"]) + "DNT")
-										print("account: " + l["args"]["to"])
+							if event["name"] == "Swap":
+								print("EVENT " + event["name"])
+								decoded_logs = self.decodeLogs(contract, receipt, log, event)
+								for l in decoded_logs:
+									print(l)
+									print("---")
+									if l["args"]["sender"] == self.config["TransferHelper"]:
+										print("Swap by Cakeswap")
+										if l["args"]["amount1In"] != 0 and l["args"]["amount0Out"] != 0:
+											print("send " + str(l["args"]["amount1In"]) + " USDT")
+											print("out " + str(l["args"]["amount0Out"]) + "DNT")
+											print("account: " + l["args"]["to"])
 
-										#fixe buy amounts
-										print("check " + str(self.settings("buy_min_amount")) +str(self.settings("buy_min_amount") * self.config["tokens"][1]["zeros"]))
-										if l["args"]["amount1In"] >= self.settings("buy_min_amount") * self.config["tokens"][1]["zeros"]:
-											print("save_min_buy()")
-											self.save_min_buy(l["args"]["to"], l["args"]["amount0Out"], l["args"]["amount1In"], l["transactionHash"].hex())
+											#fixe buy amounts
+											#print("check " + str(self.settings("buy_min_amount")) +str(self.settings("buy_min_amount") * self.config["tokens"][1]["zeros"]))
+											if l["args"]["amount1In"] >= self.settings("buy_min_amount") * self.config["tokens"][1]["zeros"]:
+												print("save_min_buy()")
+												self.save_min_buy(l["args"]["to"], l["args"]["amount0Out"], l["args"]["amount1In"], l["transactionHash"].hex())
 
-									elif l["args"]["amount0In"] != 0 and l["args"]["amount1Out"] != 0:
-										print("send " + str(l["args"]["amount0In"]) + " DNT")
-										print("out " + str(l["args"]["amount1Out"]) + "USDT")
-										print("account: " + l["args"]["to"])
+										elif l["args"]["amount0In"] != 0 and l["args"]["amount1Out"] != 0:
+											print("send " + str(l["args"]["amount0In"]) + " DNT")
+											print("out " + str(l["args"]["amount1Out"]) + "USDT")
+											print("account: " + l["args"]["to"])
 
 							
 
-						if event["name"] in ["Transfer"]:
-							print("EVENT " + event["name"])
-							decoded_logs = self.decodeLogs(contract, receipt, log, event)
-							#token0Amount = 0
-							#token1Amount = 0
-							#account = ""
-							#foundPool = False
-							for l in decoded_logs:
-								#Перевели в пул и адрес=
-								if l["args"]["to"] == self.config["pool"] and l["address"] == self.config["tokens"][0]["contract"]:
-									token0Amount = l["args"]["value"]
-									account = l["args"]["from"]
-									print("send to pool "  + str(l["args"]["value"]/self.config["tokens"][0]["zeros"]) + " " + self.config["tokens"][0]["name"])
-								if l["args"]["to"] == self.config["pool"] and l["address"] == self.config["tokens"][1]["contract"]:
-									token1Amount = l["args"]["value"]
-									account = l["args"]["from"]
-									print("send to pool "  + str(l["args"]["value"]/self.config["tokens"][1]["zeros"]) + " " + self.config["tokens"][1]["name"])
+							if event["name"] in ["Transfer"]:
+								print("EVENT " + event["name"])
+								decoded_logs = self.decodeLogs(contract, receipt, log, event)
+								#token0Amount = 0
+								#token1Amount = 0
+								#account = ""
+								#foundPool = False
+								for l in decoded_logs:
+									#Перевели в пул и адрес=
+									if l["args"]["to"] == self.config["pool"] and l["address"] == self.config["tokens"][0]["contract"]:
+										token0Amount = l["args"]["value"]
+										account = l["args"]["from"]
+										print("send to pool "  + str(l["args"]["value"]/self.config["tokens"][0]["zeros"]) + " " + self.config["tokens"][0]["name"])
+									if l["args"]["to"] == self.config["pool"] and l["address"] == self.config["tokens"][1]["contract"]:
+										token1Amount = l["args"]["value"]
+										account = l["args"]["from"]
+										print("send to pool "  + str(l["args"]["value"]/self.config["tokens"][1]["zeros"]) + " " + self.config["tokens"][1]["name"])
 
-								#Из пула
-								if l["args"]["from"] == self.config["pool"] and l["address"] == self.config["tokens"][0]["contract"]:
-									token0Amount = -1 * l["args"]["value"]
-									account = l["args"]["to"]
-									print("from pool "  + str(l["args"]["value"]/self.config["tokens"][0]["zeros"]) + " " + self.config["tokens"][0]["name"])
+									#Из пула
+									if l["args"]["from"] == self.config["pool"] and l["address"] == self.config["tokens"][0]["contract"]:
+										token0Amount = -1 * l["args"]["value"]
+										account = l["args"]["to"]
+										print("from pool "  + str(l["args"]["value"]/self.config["tokens"][0]["zeros"]) + " " + self.config["tokens"][0]["name"])
 
-								if l["args"]["from"] == self.config["pool"] and l["address"] == self.config["tokens"][1]["contract"]:
-									token1Amount = -1 * l["args"]["value"]
-									account = l["args"]["to"]
-									print("from pool "  + str(l["args"]["value"]/self.config["tokens"][1]["zeros"]) + " " + self.config["tokens"][1]["name"])
+									if l["args"]["from"] == self.config["pool"] and l["address"] == self.config["tokens"][1]["contract"]:
+										token1Amount = -1 * l["args"]["value"]
+										account = l["args"]["to"]
+										print("from pool "  + str(l["args"]["value"]/self.config["tokens"][1]["zeros"]) + " " + self.config["tokens"][1]["name"])
 
-								#Перевод LP токенов
-								if l["args"]["from"] == "0x0000000000000000000000000000000000000000" and l["address"] == self.config["pool"]:
-									foundPool = True
+									#Перевод LP токенов
+									if l["args"]["from"] == "0x0000000000000000000000000000000000000000" and l["address"] == self.config["pool"]:
+										foundPool = True
 							#cycle by logs
 					#event exist
 				#cycle by events
 
-				#Сохраняем POOL
-				if foundPool and token0Amount != 0 and token1Amount != 0:
-					print("SAVE POOL " + account + " " + str(token0Amount) + " " + str(token1Amount))
-					self.save_pool(account, token0Amount, token1Amount, l["transactionHash"].hex(), "events")
+					#Сохраняем POOL
+					if foundPool and token0Amount != 0 and token1Amount != 0:
+						print("SAVE POOL " + account + " " + str(token0Amount) + " " + str(token1Amount))
+						self.save_pool(account, token0Amount, token1Amount, l["transactionHash"].hex(), "events")
 
 #								print(l)
 #								print("---")
@@ -449,8 +452,35 @@ class Parser:
 #			print("pool")
 #			print(tx)
 		stop =  time.time()
-		parse_time = stop-start
-		print("Block parse time: " +str(parse_time) + "s")
+		parse_time = int(stop-start)
+		print("Block parse time: " + str(timedelta(seconds = parse_time)))
+
+
+	def parseFromBlock(self, start_block):
+		parser_progress = True
+		start = time.time()
+
+		print("parseFromBlock()...")
+		end_block = self.getLastParsedBlock()
+		print("parse blocks from " + str(start_block) + " to " + str(end_block))
+		n2 = 0
+		for n in range(start_block, end_block):
+			n2 += 1
+			#Парсим блок
+			print("parse block " + str(n) + " (" + str(n2)+"/" + str(self.stop_parse_block-start_block)+")")# + str(time.time()-start) + "s")
+
+			self.parseBlock(n)
+#			print(time.time()-start)
+
+#			timedelta(seconds=sec)
+
+			print("total work time: " + str(timedelta(seconds=int(time.time() - start))))
+			#Запоминаем последний обработанный
+#			self.saveLastParsedBlock(n)
+		stop =  time.time()
+		print("Parsing complete: " + str(stop-start) + "s")
+		parser_progress  = False
+
 
 	#Parse All Blocks
 	def parseAllBlocks(self):
