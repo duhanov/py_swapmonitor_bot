@@ -39,6 +39,8 @@ start_block = 23516200
 end_block = 24269598
 
 #start_block = 23551511
+start_block = 23519800
+
 
 block_n = start_block
 block_delta = 200
@@ -47,25 +49,28 @@ start_time = time.time()
 
 #parser.parseTx("0x29a7e11fb25eb4e3cbebe829b6ec3b640ffc398001ada2766b642a48fb89745a")
 
+try:
+	while start_block <= start_block:
+		print("Parse bocks: " + str(block_n) + "-" +  str(block_n+block_delta) + "(" + str(block_delta) + ")")
+		url = 'https://api.bscscan.com/api?module=account&action=txlist&address=0x10ed43c718714eb63d5aa57b78b54704e256024e&startblock=' + str(block_n) + '&endblock=' + str(block_n+block_delta) + '&page=1&offset=0&sort=asc&apikey=J3NSSIP3WKM3PMSIXW6YG1DYTBM3NAW25H'
+		print(url)
+		r = requests.get(url)
+		txs = r.json()["result"]
+		print("Count transactions: " + str(len(txs)))
+		tx_n = 0
+		for tx in txs:
+			tx_n +=1
+			print("parseTx " + str(tx_n) + "/" + str(len(txs)) + " " + tx["hash"])
+			parser.parseTx(tx["hash"])
 
-while start_block <= start_block:
-	print("Parse bocks: " + str(block_n) + "-" +  str(block_n+block_delta) + "(" + str(block_delta) + ")")
-	url = 'https://api.bscscan.com/api?module=account&action=txlist&address=0x10ed43c718714eb63d5aa57b78b54704e256024e&startblock=' + str(block_n) + '&endblock=' + str(block_n+block_delta) + '&page=1&offset=0&sort=asc&apikey=J3NSSIP3WKM3PMSIXW6YG1DYTBM3NAW25H'
-	print(url)
-	r = requests.get(url)
-	txs = r.json()["result"]
-	print("Count transactions: " + str(len(txs)))
-	tx_n = 0
-	for tx in txs:
-		tx_n +=1
-		print("parseTx " + str(tx_n) + "/" + str(len(txs)) + " " + tx["hash"])
-		parser.parseTx(tx["hash"])
+		end_time = time.time()
 
-	end_time = time.time()
-	print("Parsed blocks: " + str(start_block) + "-" +  str(end_block) + "(" + str(end_block-start_block + 1) + "). Txs: " + str(len(txs)) + " Work time: " + str(timedelta(seconds = int(end_time-start_time))))
+		block_n = block_n + block_delta
+		print("Parsed blocks: " + str(start_block) + "-" +  str(block_n) + "(" + str(block_n-start_block + 1) + "). Txs: " + str(len(txs)) + " Work time: " + str(timedelta(seconds = int(end_time-start_time))))
 
-	block_n = block_n + block_delta
-
+except Exception as exc:
+	print("ERROR!")
+	print(exc)
 
 print("Ended.")
 #print(r.json())
