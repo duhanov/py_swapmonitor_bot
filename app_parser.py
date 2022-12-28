@@ -65,7 +65,7 @@ if True:
 			error_sleep_time = 1
 			while not tx_parsed:
 				try:
-					print("parseTx " + str(tx_n) + "/" + str(len(txs)) + " " + tx["hash"])
+					print("parseTx " + str(tx_n) + "/" + str(len(txs)) + " " + tx["hash"] + " (blocks " + str(block_n) + "-" + str(block_n+block_delta) + ")")
 					parser.parseTx(tx["hash"])
 					tx_parsed = True
 				except Exception as exc:
