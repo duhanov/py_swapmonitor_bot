@@ -19,6 +19,9 @@ arg_parser = argparse.ArgumentParser(
                     description = 'parse blocks for swap and change',
                     epilog = 'from_block=start_block_number')
 
+#arg_parser.add_argument('--from_block') 
+arg_parser.add_argument('--cmd') 
+arg_parser.add_argument('--tx') 
 arg_parser.add_argument('--from_block') 
 
 args = arg_parser.parse_args()
@@ -27,31 +30,36 @@ args = arg_parser.parse_args()
 #https://explorer.bitquery.io/ru/bsc/block/23516200
 #1 Dec 2022
 
-print("Start parse blocks from " + args.from_block)
-
-print(args.from_block)
 parser = Parser()
 #parser.parseFromBlock(int(args.from_block))
 
-#1Dec
-start_block = 23516200
-#27dec
-end_block = 24269598
-
-#start_block = 23551511
-start_block = int(args.from_block)
 
 
-block_n = start_block
-block_delta = 200
 
 start_time = time.time()
 
 #parser.parseTx("0x29a7e11fb25eb4e3cbebe829b6ec3b640ffc398001ada2766b642a48fb89745a")
 
 #try:
-if True:
-	while start_block <= start_block:
+if args.cmd == "tx":
+	parser.parseTx(args.tx)
+
+if args.cmd == "parse":
+	#1Dec
+	#start_block = 23516200
+	#27dec
+	end_block = 24269598
+
+	#start_block = 23551511
+	start_block = int(args.from_block)
+
+	print("Start parse blocks from " + args.from_block)
+	print(args.from_block)
+
+	block_n = start_block
+	block_delta = 200
+
+	while start_block <= end_block:
 		print("Parse bocks: " + str(block_n) + "-" +  str(block_n+block_delta) + "(" + str(block_delta) + ")")
 		url = 'https://api.bscscan.com/api?module=account&action=txlist&address=0x10ed43c718714eb63d5aa57b78b54704e256024e&startblock=' + str(block_n) + '&endblock=' + str(block_n+block_delta) + '&page=1&offset=0&sort=asc&apikey=J3NSSIP3WKM3PMSIXW6YG1DYTBM3NAW25H'
 		print(url)

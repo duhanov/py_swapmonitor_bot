@@ -272,28 +272,30 @@ class Parser:
 
 
 	def save_min_buy(self, address, amount0, amount1, tx_hash):
-		fname = "accounts/min_" + address + ".json"
-
-		path = Path(fname)
-		if path.is_file():
-			data = json.load(open(fname))
-		else:
-			data = {"total0": 0, "total1": 0, "txs": []}
+		print(str(round(amount1/self.config["tokens"][1]["zeros"])))
+		if amount1 >= self.settings("buy_min_amount") * self.config["tokens"][1]["zeros"]:
+											
+			fname = "accounts/min_" + address + ".json"
+			path = Path(fname)
+			if path.is_file():
+				data = json.load(open(fname))
+			else:
+				data = {"total0": 0, "total1": 0, "txs": []}
 		
-		tx_found = False
-		for tx in data["txs"]:
-			if tx["hash"] == tx_hash:
-				tx_found = True
-				break
+			tx_found = False
+			for tx in data["txs"]:
+				if tx["hash"] == tx_hash:
+					tx_found = True
+					break
 		#Если еще не обрабатывали эту транзакцию
-		if tx_found:
-			print("TX ALREADY FOUND!")
-		else:
-			data["total0"] = data["total0"] + amount0
-			data["total1"] = data["total1"] + amount1
-			data["txs"].append({"time": time.time(), "amount0": amount0, "amount1": amount1, "hash": tx_hash})
-			with open(fname, 'w') as f:
-				json.dump(data, f)
+			if tx_found:
+				print("TX ALREADY FOUND!")
+			else:
+				data["total0"] = data["total0"] + amount0
+				data["total1"] = data["total1"] + amount1
+				data["txs"].append({"time": time.time(), "amount0": amount0, "amount1": amount1, "hash": tx_hash})
+				with open(fname, 'w') as f:
+					json.dump(data, f)
 
 
 
@@ -350,20 +352,22 @@ class Parser:
 										print("Swap by Cakeswap")
 										if l["args"]["amount1In"] != 0 and l["args"]["amount0Out"] != 0:
 											print("send " + str(l["args"]["amount1In"]) + " USDT")
-											print("out " + str(l["args"]["amount0Out"]) + "DNT")
+											print("out " + str(l["args"]["amount0Out"]) + " DNT")
 											print("account: " + l["args"]["to"])
 
 											#fixe buy amounts
 											#print("check " + str(self.settings("buy_min_amount")) +str(self.settings("buy_min_amount") * self.config["tokens"][1]["zeros"]))
-											if l["args"]["amount1In"] >= self.settings("buy_min_amount") * self.config["tokens"][1]["zeros"]:
-												print("save_min_buy()")
-												self.save_min_buy(l["args"]["to"], l["args"]["amount0Out"], l["args"]["amount1In"], l["transactionHash"].hex())
+											print("save_min_buy()")
+#		if l["args"]["amount1In"] >= self.settings("buy_min_amount") * self.config["tokens"][1]["zeros"]:
 
+#fix
+											self.save_min_buy(l["args"]["to"], l["args"]["amount0Out"], l["args"]["amount1In"], l["transactionHash"].hex())
+											break
 										elif l["args"]["amount0In"] != 0 and l["args"]["amount1Out"] != 0:
 											print("send " + str(l["args"]["amount0In"]) + " DNT")
 											print("out " + str(l["args"]["amount1Out"]) + "USDT")
 											print("account: " + l["args"]["to"])
-
+											break
 							
 
 							if event["name"] in ["Transfer"]:
