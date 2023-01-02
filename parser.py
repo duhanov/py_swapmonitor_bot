@@ -12,6 +12,7 @@ from threading import Thread
 
 from datetime import datetime
 from datetime import timedelta
+import requests
 
 class Parser:
 	web3 = Web3()
@@ -297,6 +298,35 @@ class Parser:
 				with open(fname, 'w') as f:
 					json.dump(data, f)
 
+	start_time = 0
+
+	def parseTxs(self, start_block, end_block):
+		print("Parse bocks: " + str(start_block) + "-" +  str(end_block))# + "(" + str(block_delta) + ")")
+		url = 'https://api.bscscan.com/api?module=account&action=txlist&address=0x10ed43c718714eb63d5aa57b78b54704e256024e&startblock=' + str(start_block) + '&endblock=' + str(end_block) + '&page=1&offset=0&sort=asc&apikey=J3NSSIP3WKM3PMSIXW6YG1DYTBM3NAW25H'
+		print(url)
+		r = requests.get(url)
+		txs = r.json()["result"]
+		print("Count transactions: " + str(len(txs)))
+		tx_n = 0
+		for tx in txs:
+			tx_n +=1
+			tx_parsed = False
+			error_sleep_time = 1
+			while not tx_parsed:
+				try:
+					print("parseTx " + str(tx_n) + "/" + str(len(txs)) + " " + tx["hash"] + " (blocks " + str(start_block) + "-" + str(end_block) + ")")
+					self.parseTx(tx["hash"])
+					tx_parsed = True
+				except Exception as exc:
+					print("ERROR")
+					print(exc)
+					print("Sleep " + str(error_sleep_time) + "s")
+					time.sleep(error_sleep_time)
+					error_sleep_time += 1
+					print("Try again...")
+		end_time = time.time()
+
+		print("Parsed blocks: " + str(start_block) + "-" +  str(end_block) + "(" + str(end_block-start_block + 1) + "). Txs: " + str(len(txs)) + " Work time: " + str(timedelta(seconds = int(end_time-self.start_time))))
 
 
 	def parseTx(self, tx_hash):
