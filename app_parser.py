@@ -63,14 +63,22 @@ if args.cmd == "parse":
 
 	while start_block <= end_block:
 		parser_blocks = False
+		error_sleep_time = 1
 		while not parser_blocks:
 			try:
 				parser.parseTxs(block_n, block_n+block_delta)
 				block_n = block_n + block_delta
 				parser_blocks = True
 			except Exception as exc:
+				print("ERROR")
 				traceback.print_exc()
 				print(exc)
+
+				print("Sleep " + str(error_sleep_time) + "s")
+				time.sleep(error_sleep_time)
+				error_sleep_time += 1
+				print("Try again...")
+
 
 #except Exception as exc:
 #	print("ERROR!")
