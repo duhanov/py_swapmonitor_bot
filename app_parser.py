@@ -19,12 +19,13 @@ import traceback
 arg_parser = argparse.ArgumentParser(
                     prog = 'CakeSwapParser',
                     description = 'parse blocks for swap and change',
-                    epilog = 'from_block=start_block_number')
+                    epilog = 'start_block=start_block_number')
 
 #arg_parser.add_argument('--from_block') 
 arg_parser.add_argument('--cmd') 
 arg_parser.add_argument('--tx') 
-arg_parser.add_argument('--from_block') 
+arg_parser.add_argument('--start_block') 
+arg_parser.add_argument('--end_block') 
 
 args = arg_parser.parse_args()
 
@@ -46,26 +47,33 @@ parser.start_time = time.time()
 if args.cmd == "tx":
 	parser.parseTx(args.tx)
 
+	
+
 if args.cmd == "parse":
 	#1Dec
 	#start_block = 23516200
 	#27dec
-	end_block = 24269598
+#	end_block = 24269598
 
 	#start_block = 23551511
-	start_block = int(args.from_block)
+	start_block = int(args.start_block)
+	end_block = int(args.end_block)
 
-	print("Start parse blocks from " + args.from_block)
-	print(args.from_block)
+	print("Start parse blocks from " + str(start_block) + " to " + str(end_block))
 
 	block_n = start_block
 	block_delta = 200
 
-	while start_block <= end_block:
+
+
+	while block_n <= end_block and block_delta > 0:
 		parser_blocks = False
 		error_sleep_time = 1
 		while not parser_blocks:
 			try:
+				if end_block-block_n < block_delta:
+					block_delta = end_block - block_n
+				print("block_delta=" + str(block_delta))
 				parser.parseTxs(block_n, block_n+block_delta)
 				block_n = block_n + block_delta
 				parser_blocks = True
